@@ -65,13 +65,19 @@
 
 .data
        song:   .asciiz "e'8 g' e'' c'' d'' g''"
-       debug: .asciiz "debug\n"
+       debug:  .asciiz "found\n"
+       note:   .byte 'a','b','c','d','e','f','g','r'
+       acci:   .byte 'e','i'
+       octA:   .asciiz "'"
+       octC:   .asciiz ","
        
 .text
        la      $t0 song      # put song string in t0
        li      $t1 1         # initialize # of notes
        li      $t2 0         # initialize null
        li      $t3 0x20      # set $t3 as an ascii space
+       li      $t4 0         # initialize pitch to 0
+       
        li      $a1 500       # initialize tempo to 1 bpm
        li      $a3 147       # set volume to 127
 
@@ -110,47 +116,111 @@ numNotes:
 #        $a1 - note duration in milliseconds
 
 play_note:
-       jal read_note
-       li $a0 76   # temporary pitch
-       li $a1 500  # temporary note duration
+       la      $t0 song      # put start of string back in t0
+       jal     read_note
+pn:
+       move    $a0 $t4       # set to real pitch
+       #move    $a1 $t9      # set to real duration
+       li      $v0 33
+       syscall
  
-       jr $ra
+       j exit
        
 #---------- read_note ----------
 read_note:
-       la      $t0 song      # put song string in t0
-       jal get_pitch
-rrn:
-       j exit
-        
-                  
-#---------- get_pitch ----------
-get_pitch:
        
-       
-       lb      $a0 ($t0)     # put character in t1
-       
-       beq     $a0 $t2  exit # check if reached the end of the string
-       beq     $a0 $t3  space2  # check if it's a space
+       lb      $a0 ($t0)        # put character in t1
+       beq     $a0 $t2  pn    # check if reached the end of the string
+       beq     $a0 $t3  inc2    # check if it's a space
 
        li      $v0  11       # set syscall to print the character
        syscall
        
- inc2:   
+       jal get_pitch
+       
+       
+inc2:   
        add     $t0  $t0  1   # increment loop
-       j get_pitch
+       j read_note
        
-space2:
 
-       li $a0 65
-       li $a1 1000
-
-       li $v0 33
-       syscall
-       j inc2
+                  
+#---------- get_pitch ----------
+get_pitch:
+       li      $t7  0
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsA
        
+       li      $t7  1
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsB
        
+       li      $t7  2
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsC
+       
+       li      $t7  3
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsD
+       
+       li      $t7  4
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsE
+       
+       li      $t7  5
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsF
+       
+       li      $t7  6
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsG
+       
+       li      $t7  7
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsR
+acs:
+       jr $ra
+itsA:
+      li $t4 57
+      j acs
+       
+itsB:
+      li $t4 59
+      j acs 
+           
+itsC:
+      li $t4 60
+      j acs
+       
+itsD:
+      li $t4 62
+      j acs
+      
+itsE:
+      # if it's an e then you have to jump to the next character
+      # see if it's an s
+      #     if s, jump to acs
+      #     else jump back here to assign value of 64
+      li $t4 64  
+      j acs
+       
+itsF:
+      li $t4 65
+      j acs 
+           
+itsG:
+      li $t4 67
+      j acs
+       
+itsR:
+      li $t4 0
+      j acs
+                 
 exit:
+       move $a0 $t4
+       li $v0 1
+       syscall
+      
        li $v0, 10
        syscall
        
