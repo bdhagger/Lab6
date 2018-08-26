@@ -71,14 +71,14 @@
        octC:   .asciiz ","
        
 .text
-       la      $t0 song      # put song string in t0
-       li      $t1 1         # initialize # of notes
-       li      $t2 0         # initialize null
-       li      $t3 0x20      # set $t3 as an ascii space
-       li      $t4 0         # initialize pitch to 0
+       la      $t0              song                # put song string in t0
+       li      $t1              1                   # initialize # of notes
+       li      $t2              0                   # initialize null
+       li      $t3              0x20                # set $t3 as an ascii space
+       li      $t4              0                   # initialize pitch to 0
        
-       li      $a1 500       # initialize tempo to 1 bpm
-       li      $a3 127       # set volume to 127
+       li      $a1              500                 # initialize tempo to 1 bpm
+       li      $a3              127                 # set volume to 127
 
        jal     play_song
 
@@ -93,215 +93,206 @@ rps:
        
 #------- get_song_length -------
 get_song_length:
-       lb      $a0 ($t0)           # put character in a0
-       beq     $a0 $t2  numNotes   # check if reached the end of the string
-       beq     $a0 $t3  space1  # check if it's a space
+       lb      $a0              ($t0)               # put character in a0
+       beq     $a0              $t2       numNotes  # check if reached the end of the string
+       beq     $a0              $t3       space1    # check if it's a space
 
  inc:   
-       add     $t0  $t0  1         # increment loop
-       j get_song_length
+       add     $t0              $t0       1         # increment loop
+       j       get_song_length
        
 space1:
-       add $t1 $t1 1               # increment number of notes
-       j inc
+       add     $t1              $t1       1         # increment number of notes
+       j       inc
        
 numNotes:
-      move    $a0 $t1             # output the number of notes in the song
-      li      $v0 1
-      j rps
+       move    $a0              $t1                 # output the number of notes in the song
+       li      $v0              1
+       j rps
            
 #---------- play_note ----------
 # input: $a0 - pitch
 #        $a1 - note duration in milliseconds
 
 play_note:
-       la      $t0 song      # put start of string back in t0
+       la      $t0              song                # put start of string back in t0
        jal     read_note
 pn:
-       move    $a0 $t4       # set to real pitch
-       
-       li      $v0 33
-       syscall               # play the last note
+       move    $a0              $t4                 # set a0 to pitch
+       li      $v0              33
+       syscall                                      # play the last note
 
        j exit
                
 #---------- read_note ----------
 read_note:
-       
-       lb      $a0 ($t0)            # put character in t1
-       beq     $a0 $t2  pn          # check if reached the end of the string
-       beq     $a0 $t3  playnote    # check if it's a space
+       lb      $a0              ($t0)               # put character in t1
+       beq     $a0              $t2       pn        # check if reached the end of the string
+       beq     $a0              $t3       playnote  # check if it's a space
 
-       li      $v0  11              # set syscall to print the character
+       li      $v0              11                  # set syscall to print the character
        syscall
 
-       jal get_pitch
-       jal get_rhythm
-       
+       jal     get_pitch
+       jal     get_rhythm
        
 inc2:   
-       add     $t0  $t0  1   # increment loop
-       j read_note
+       add     $t0              $t0       1         # increment loop
+       j       read_note
        
 playnote:
-       move    $a0 $t4       # set to real pitch
-       li      $v0 33
+       move    $a0              $t4                 # set to real pitch
+       li      $v0              33
        syscall
        j inc2
                   
 #---------- get_pitch ----------
 get_pitch:
-       li      $t7  0
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsA
+       li      $t7              0
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsA
        
-       li      $t7  1
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsB
+       li      $t7              1
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsB
        
-       li      $t7  2
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsC
+       li      $t7              2
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsC
        
-       li      $t7  3
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsD
+       li      $t7              3
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsD
        
-       li      $t7  4
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsE
+       li      $t7              4
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsE
        
-       li      $t7  5
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsF
+       li      $t7              5
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsF
        
-       li      $t7  6
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsG
+       li      $t7              6
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsG
        
-       li      $t7  7
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsR
+       li      $t7              7
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsR
 acs:
-       li      $t7  8
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsI
+       li      $t7              8
+       lb      $t6              note($t7)
+       beq     $a0              $t6       itsI
        
 oct:     
-       lb      $t6  octA
-       beq     $a0  $t6 itsOctA
+       lb      $t6              octA
+       beq     $a0              $t6       itsOctA
 
-       lb      $t6  octC
-       beq     $a0  $t6 itsOctC
+       lb      $t6              octC
+       beq     $a0              $t6       itsOctC
        
 pitchDone:       
-       jr $ra
+       jr      $ra
        
 itsOctA:
-       add     $t4  $t4 12
-       j pitchDone
+       add     $t4              $t4       12
+       j       pitchDone
        
 itsOctC:
-       sub     $t4  $t4 12
-       j pitchDone
+       sub     $t4              $t4       12
+       j       pitchDone
        
 itsI:
-      add $t4 $t4 1
-      j oct
+       add     $t4              $t4       1
+       j       oct
        
 itsA:
-      li $t4 57
-      j acs
+       li      $t4              57
+       j       acs
        
 itsB:
-      li $t4 59
-      j acs 
+       li      $t4              59
+       j       acs 
            
 itsC:
-      li $t4 60
-      j acs
+       li      $t4              60
+       j       acs
        
 itsD:
-      li $t4 62
-      j acs
+       li      $t4              62
+       j       acs
       
-itsE:
-      # if it's an e then you have to jump to the next character
-      # see if it's an s
-      #     if s, sub 1 from t4
-      #     else go back a character and jump back here to assign value of 64
-      
-       addi    $t0 $t0 1
-       lb      $a0 ($t0)
-       li      $v0 11
-       syscall
-       li      $t7 9
-       lb      $t6 note($t7) 
-       beq     $a0  $t6 esjump
+itsE: 
+       addi    $t0              $t0       1         # jump to the next character
+       lb      $a0              ($t0)
        
-       li $t4 64  
-       j acs
+       li      $t7              9                   # see if it's an s
+       lb      $t6              note($t7) 
+       beq     $a0              $t6       esjump    # handle es case
+       
+       li      $t4              64                  # assign value of 64 if just e
+       j       acs
 
 esjump:
-      sub $t4 $t4 1
-      j acs
+       sub     $t4              $t4       1
+       j       acs
        
 itsF:
-      li $t4 65
-      j acs 
+       li      $t4              65
+       j       acs 
            
 itsG:
-      li $t4 67
-      j acs
+       li      $t4              67
+       j       acs
        
 itsR:
-      li $t4 0
-      j acs
+       li      $t4              0
+       j       acs
       
 #---------- get_rhythm ----------
 get_rhythm:
-       li      $t7  10
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its1
+       li      $t7              10
+       lb      $t6              note($t7)
+       beq     $a0              $t6       its1
        
-       li      $t7  11
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its2
+       li      $t7              11
+       lb      $t6              note($t7)
+       beq     $a0              $t6       its2
        
-       li      $t7  12
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its4
+       li      $t7              12
+       lb      $t6              note($t7)
+       beq     $a0              $t6       its4
        
-       li      $t7  13
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its8
+       li      $t7              13
+       lb      $t6              note($t7)
+       beq     $a0              $t6       its8
        
-       lb      $t6  rhy
-       beq     $a0  $t6 its16
+       lb      $t6              rhy
+       beq     $a0              $t6       its16
        
 gotR:    
-       jr $ra
+       jr      $ra
 
 its1:
-       li $a1 2000
-       j gotR
+       li      $a1              2000
+       j       gotR
        
 its2:
-       li $a1 1000
-       j gotR
+       li      $a1              1000
+       j       gotR
        
 its4:
-       li $a1 500
-       j gotR
+       li      $a1              500
+       j       gotR
        
 its8:
-       li $a1 250
-       j gotR
+       li      $a1              250
+       j       gotR
        
 its16:
-       li $a1 125
-       j gotR
+       li      $a1              125
+       j       gotR
 exit:
-       li $v0, 10
+       li      $v0              10
        syscall
        
