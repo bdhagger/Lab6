@@ -64,10 +64,10 @@
 ####################################################################################
 
 .data
-       song:   .asciiz "e'8 g' e'' c'' d'' g''"
+       #song:   .asciiz "e'8 aes,8 g' c'' d'' g''"
+       song:   .asciiz "ais,8"
        debug:  .asciiz "found\n"
-       note:   .byte 'a','b','c','d','e','f','g','r'
-       acci:   .byte 'e','i'
+       note:   .byte 'a','b','c','d','e','f','g','r','i','s'
        octA:   .asciiz "'"
        octC:   .asciiz ","
        
@@ -136,6 +136,7 @@ read_note:
        li      $v0  11       # set syscall to print the character
        syscall
        
+
        jal get_pitch
        
        
@@ -179,7 +180,17 @@ get_pitch:
        lb      $t6  note($t7)
        beq     $a0  $t6 itsR
 acs:
+       li      $t7  8
+       lb      $t6  note($t7)
+       beq     $a0  $t6 itsI
+       
+oct:       
        jr $ra
+       
+itsI:
+      add $t4 $t4 1
+      j oct
+       
 itsA:
       li $t4 57
       j acs
@@ -199,9 +210,22 @@ itsD:
 itsE:
       # if it's an e then you have to jump to the next character
       # see if it's an s
-      #     if s, jump to acs
-      #     else jump back here to assign value of 64
-      li $t4 64  
+      #     if s, sub 1 from t4
+      #     else go back a character and jump back here to assign value of 64
+      
+       addi    $t0 $t0 1
+       lb      $a0 ($t0)
+       li      $v0 11
+       syscall
+       li      $t7 9
+       lb      $t6 note($t7) 
+       beq     $a0  $t6 esjump
+       
+       li $t4 64  
+       j acs
+
+esjump:
+      sub $t4 $t4 1
       j acs
        
 itsF:
