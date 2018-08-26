@@ -64,8 +64,8 @@
 ####################################################################################
 
 .data
-       song:   .asciiz "e'8 g' e'' c'' d'' g''"
-       note:   .byte 'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
+       song:   .asciiz "e8 e r e r c e r g r r r g,"
+       note:   .byte   'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
        rhy:    .asciiz "16"
        octA:   .asciiz "'"
        octC:   .asciiz ","
@@ -130,8 +130,8 @@ read_note:
        beq     $a0              $t2       pn        # check if reached the end of the string
        beq     $a0              $t3       playnote  # check if it's a space
 
-       li      $v0              11                  # set syscall to print the character
-       syscall
+       # li      $v0              11                # set syscall to print the character
+       # syscall
 
        jal     get_pitch
        jal     get_rhythm
@@ -141,14 +141,14 @@ inc2:
        j       read_note
        
 playnote:
-       move    $a0              $t4                 # set to real pitch
+       move    $a0              $t4                 # set $a0 pitch
        li      $v0              33
        syscall
        j inc2
                   
 #---------- get_pitch ----------
 get_pitch:
-       li      $t7              0
+       li      $t7              0                   # check which letter started the note
        lb      $t6              note($t7)
        beq     $a0              $t6       itsA
        
@@ -180,11 +180,11 @@ get_pitch:
        lb      $t6              note($t7)
        beq     $a0              $t6       itsR
 acs:
-       li      $t7              8
+       li      $t7              8                   # assign accidental value to $a0
        lb      $t6              note($t7)
        beq     $a0              $t6       itsI
        
-oct:     
+oct:                                                # check if there are octal characters
        lb      $t6              octA
        beq     $a0              $t6       itsOctA
 
@@ -194,7 +194,7 @@ oct:
 pitchDone:       
        jr      $ra
        
-itsOctA:
+itsOctA:                                            # assign octal value to $a0
        add     $t4              $t4       12
        j       pitchDone
        
@@ -206,7 +206,7 @@ itsI:
        add     $t4              $t4       1
        j       oct
        
-itsA:
+itsA:                                               # assign note values to $a0
        li      $t4              57
        j       acs
        
@@ -233,7 +233,7 @@ itsE:
        li      $t4              64                  # assign value of 64 if just e
        j       acs
 
-esjump:
+esjump:                                             # assign accidental value to $a0
        sub     $t4              $t4       1
        j       acs
        
@@ -245,12 +245,12 @@ itsG:
        li      $t4              67
        j       acs
        
-itsR:
+itsR:                                               # rest note
        li      $t4              0
        j       acs
       
 #---------- get_rhythm ----------
-get_rhythm:
+get_rhythm:                                         # see which beat value comes up
        li      $t7              10
        lb      $t6              note($t7)
        beq     $a0              $t6       its1
@@ -273,7 +273,7 @@ get_rhythm:
 gotR:    
        jr      $ra
 
-its1:
+its1:                                               # assign duration values to $a1
        li      $a1              2000
        j       gotR
        
@@ -292,7 +292,8 @@ its8:
 its16:
        li      $a1              125
        j       gotR
-exit:
+       
+exit:                                               # exit
        li      $v0              10
        syscall
        
