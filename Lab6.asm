@@ -198,11 +198,11 @@ pitchDone:
        jr $ra
        
 itsOctA:
-       sub     $t4  $t4 12
+       add     $t4  $t4 12
        j pitchDone
        
 itsOctC:
-       add     $t4  $t4 12
+       sub     $t4  $t4 12
        j pitchDone
        
 itsI:
