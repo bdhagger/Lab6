@@ -60,7 +60,6 @@
 #  
 #         $v1 - address of first character of next note
 
-# $t0 holds the string
 
 ####################################################################################
 
@@ -69,17 +68,60 @@
        
 .text
        la      $t0 song      # put song string in t0
+       li      $t1 0         # initialize # of notes
+       li      $t2 0         # initialize null
        li      $t3 0x20      # set $t3 as an ascii space
        li      $a3 127       # set volume to 127
+       jal     play_song
+       jal     exit
        
-       jal play_song
-       
-       jal exit
-       
+#---------- play_song ----------
+
+# input: $a0 - address of first character in string containing song
+#        $a1 - tempo of song in beats per minute
 play_song:
-      
+       li      $a1 500       # initiate tempo to have 1 beat
+       jal     get_song_length
+ 
+       jr      $ra
+       
+       
+       
+       
+get_song_length:
+
+       lb      $a0 ($t0)     # put character in t1
+       beq     $a0 $t2  exit # check if reached the end of the string
+       beq     $a0 $t3  playnote  # check if it's a space
+
+       li      $v0  11       # set syscall to print the character
+       syscall
+       
+ inc:   
+       add     $t0  $t0  1   # increment loop
+       j get_song_length
+       
+       
+       
+playnote:
+       jal play_note
+       j inc
+       
+play_note:    
+       li $a0 65
+       li $a1 1000
+
+
+       li $v0 33
+       syscall     
+       jr $ra
+       
+       
+       
        
 exit:
+       jal play_note
+       
        li $v0, 10
        syscall
        
