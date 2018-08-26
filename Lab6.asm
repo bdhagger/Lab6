@@ -68,60 +68,60 @@
        
 .text
        la      $t0 song      # put song string in t0
-       li      $t1 0         # initialize # of notes
+       li      $t1 1         # initialize # of notes
        li      $t2 0         # initialize null
        li      $t3 0x20      # set $t3 as an ascii space
+       li      $a1 500       # initialize tempo to 1 bpm
        li      $a3 127       # set volume to 127
+
        jal     play_song
-       jal     exit
+
        
 #---------- play_song ----------
-
-# input: $a0 - address of first character in string containing song
-#        $a1 - tempo of song in beats per minute
 play_song:
-       li      $a1 500       # initiate tempo to have 1 beat
        jal     get_song_length
- 
-       jr      $ra
+rps:
+       jal    play_note
+       j      exit
        
        
-       
-       
+#------- get_song_length -------
 get_song_length:
+       lb      $a0 ($t0)           # put character in a0
+       beq     $a0 $t2  numNotes   # check if reached the end of the string
+       beq     $a0 $t3  spaceHere  # check if it's a space
 
-       lb      $a0 ($t0)     # put character in t1
-       beq     $a0 $t2  exit # check if reached the end of the string
-       beq     $a0 $t3  playnote  # check if it's a space
-
-       li      $v0  11       # set syscall to print the character
-       syscall
-       
  inc:   
-       add     $t0  $t0  1   # increment loop
+       add     $t0  $t0  1         # increment loop
        j get_song_length
        
-       
-       
-playnote:
-       jal play_note
+spaceHere:
+       add $t1 $t1 1               # increment number of notes
        j inc
        
-play_note:    
-       li $a0 65
-       li $a1 1000
+numNotes:
+      move    $a0 $t1             # output the number of notes in the song
+      li      $v0 1
+      j rps
+           
+#---------- play_note ----------
+# input: $a0 - pitch
+#        $a1 - note duration in milliseconds
 
-
+play_note:
+       jal read_note
        li $v0 33
-       syscall     
+       syscall
        jr $ra
        
-       
-       
+read_note:
+
+       jr $ra
+                  
+ 
        
 exit:
-       jal play_note
-       
+       syscall # prints number of notes atm
        li $v0, 10
        syscall
        
