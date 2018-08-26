@@ -65,7 +65,7 @@
 
 .data
        #song:   .asciiz "e'8 aes,8 g' c'' d'' g''"
-       song:   .asciiz "ais,8"
+       song:   .asciiz "e,8"
        debug:  .asciiz "found\n"
        note:   .byte 'a','b','c','d','e','f','g','r','i','s'
        octA:   .asciiz "'"
@@ -184,8 +184,23 @@ acs:
        lb      $t6  note($t7)
        beq     $a0  $t6 itsI
        
-oct:       
+oct:     
+       lb      $t6  octA
+       beq     $a0  $t6 itsOctA
+
+       lb      $t6  octC
+       beq     $a0  $t6 itsOctC
+       
+pitchDone:       
        jr $ra
+       
+itsOctA:
+       sub     $t4  $t4 12
+       j pitchDone
+       
+itsOctC:
+       add     $t4  $t4 12
+       j pitchDone
        
 itsI:
       add $t4 $t4 1
