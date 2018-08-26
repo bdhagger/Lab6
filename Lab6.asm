@@ -64,10 +64,11 @@
 ####################################################################################
 
 .data
-       #song:   .asciiz "e'8 aes,8 g' c'' d'' g''"
-       song:   .asciiz "e,8"
+       song:   .asciiz "e'8 aes,8 g' c'' d'' g''"
+       #song:   .asciiz "e,8"
        debug:  .asciiz "found\n"
-       note:   .byte 'a','b','c','d','e','f','g','r','i','s'
+       note:   .byte 'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
+       rhy:    .asciiz "16"
        octA:   .asciiz "'"
        octC:   .asciiz ","
        
@@ -122,16 +123,16 @@ pn:
        move    $a0 $t4       # set to real pitch
        #move    $a1 $t9      # set to real duration
        li      $v0 33
-       syscall
- 
+       syscall               # play the last note
+
        j exit
-       
+               
 #---------- read_note ----------
 read_note:
        
-       lb      $a0 ($t0)        # put character in t1
-       beq     $a0 $t2  pn    # check if reached the end of the string
-       beq     $a0 $t3  inc2    # check if it's a space
+       lb      $a0 ($t0)            # put character in t1
+       beq     $a0 $t2  pn          # check if reached the end of the string
+       beq     $a0 $t3  playnote    # check if it's a space
 
        li      $v0  11       # set syscall to print the character
        syscall
@@ -144,7 +145,11 @@ inc2:
        add     $t0  $t0  1   # increment loop
        j read_note
        
-
+playnote:
+       move    $a0 $t4       # set to real pitch
+       li      $v0 33
+       syscall
+       j inc2
                   
 #---------- get_pitch ----------
 get_pitch:
@@ -256,10 +261,6 @@ itsR:
       j acs
                  
 exit:
-       move $a0 $t4
-       li $v0 1
-       syscall
-      
        li $v0, 10
        syscall
        
