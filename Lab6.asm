@@ -64,9 +64,7 @@
 ####################################################################################
 
 .data
-       song:   .asciiz "e'8 aes,8 g' c'' d'' g''"
-       #song:   .asciiz "e,8"
-       debug:  .asciiz "found\n"
+       song:   .asciiz "e'8 g' e'' c'' d'' g''"
        note:   .byte 'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
        rhy:    .asciiz "16"
        octA:   .asciiz "'"
@@ -80,7 +78,7 @@
        li      $t4 0         # initialize pitch to 0
        
        li      $a1 500       # initialize tempo to 1 bpm
-       li      $a3 147       # set volume to 127
+       li      $a3 127       # set volume to 127
 
        jal     play_song
 
@@ -121,7 +119,7 @@ play_note:
        jal     read_note
 pn:
        move    $a0 $t4       # set to real pitch
-       #move    $a1 $t9      # set to real duration
+       
        li      $v0 33
        syscall               # play the last note
 
@@ -134,11 +132,11 @@ read_note:
        beq     $a0 $t2  pn          # check if reached the end of the string
        beq     $a0 $t3  playnote    # check if it's a space
 
-       li      $v0  11       # set syscall to print the character
+       li      $v0  11              # set syscall to print the character
        syscall
-       
 
        jal get_pitch
+       jal get_rhythm
        
        
 inc2:   
@@ -259,7 +257,50 @@ itsG:
 itsR:
       li $t4 0
       j acs
-                 
+      
+#---------- get_rhythm ----------
+get_rhythm:
+       li      $t7  10
+       lb      $t6  note($t7)
+       beq     $a0  $t6 its1
+       
+       li      $t7  11
+       lb      $t6  note($t7)
+       beq     $a0  $t6 its2
+       
+       li      $t7  12
+       lb      $t6  note($t7)
+       beq     $a0  $t6 its4
+       
+       li      $t7  13
+       lb      $t6  note($t7)
+       beq     $a0  $t6 its8
+       
+       lb      $t6  rhy
+       beq     $a0  $t6 its16
+       
+gotR:    
+       jr $ra
+
+its1:
+       li $a1 2000
+       j gotR
+       
+its2:
+       li $a1 1000
+       j gotR
+       
+its4:
+       li $a1 500
+       j gotR
+       
+its8:
+       li $a1 250
+       j gotR
+       
+its16:
+       li $a1 125
+       j gotR
 exit:
        li $v0, 10
        syscall
