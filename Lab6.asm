@@ -16,6 +16,12 @@
 
 # REGISTER USAGE
 
+# $t0: holds original song string
+# $t1: holds the number of notes
+# $t2: represents null for end of string
+# $t3: is an ascii space
+# $t7: used as an index
+
 #---------- play_song ----------
 
 # input: $a0 - address of first character in string containing song
@@ -60,45 +66,43 @@
 #  
 #         $v1 - address of first character of next note
 
-
 ####################################################################################
 
 .data
-       song:   .asciiz "e8 e r e r c e r g r r r g,"
+       song:   .asciiz "e'8 g' e'' c'' d'' g''"
        note:   .byte   'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
        rhy:    .asciiz "16"
        octA:   .asciiz "'"
        octC:   .asciiz ","
        
 .text
-       la      $t0              song                # put song string in t0
+     
+#---------- play_song ----------
+play_song:
+ 
+       la      $a0              song                # put song string in t0
        li      $t1              1                   # initialize # of notes
        li      $t2              0                   # initialize null
        li      $t3              0x20                # set $t3 as an ascii space
-       li      $t4              0                   # initialize pitch to 0
+       li      $v0              0                   # initialize pitch to 0
        
        li      $a1              500                 # initialize tempo to 1 bpm
        li      $a3              127                 # set volume to 127
-
-       jal     play_song
-
-       
-#---------- play_song ----------
-play_song:
+ 
        jal     get_song_length
 rps:
        jal     play_note
        j       exit
        
-       
 #------- get_song_length -------
 get_song_length:
-       lb      $a0              ($t0)               # put character in a0
-       beq     $a0              $t2       numNotes  # check if reached the end of the string
-       beq     $a0              $t3       space1    # check if it's a space
+       move    $t6              $a0                 # put character in a0
+       lb      $t0              ($t6)
+       beq     $t0              $t2       numNotes  # check if reached the end of the string
+       beq     $t0              $t3       space1    # check if it's a space
 
  inc:   
-       add     $t0              $t0       1         # increment loop
+       add     $a0              $a0       1         # increment loop
        j       get_song_length
        
 space1:
@@ -111,14 +115,11 @@ numNotes:
        j rps
            
 #---------- play_note ----------
-# input: $a0 - pitch
-#        $a1 - note duration in milliseconds
-
 play_note:
        la      $t0              song                # put start of string back in t0
        jal     read_note
 pn:
-       move    $a0              $t4                 # set a0 to pitch
+       move    $a0              $v0                 # set a0 to pitch
        li      $v0              33
        syscall                                      # play the last note
 
@@ -126,12 +127,10 @@ pn:
                
 #---------- read_note ----------
 read_note:
-       lb      $a0              ($t0)               # put character in t1
+       lb      $a0              ($t0)               # put character in $a0 and $v1
+       lb      $v1              1($t0)
        beq     $a0              $t2       pn        # check if reached the end of the string
        beq     $a0              $t3       playnote  # check if it's a space
-
-       # li      $v0              11                # set syscall to print the character
-       # syscall
 
        jal     get_pitch
        jal     get_rhythm
@@ -141,7 +140,7 @@ inc2:
        j       read_note
        
 playnote:
-       move    $a0              $t4                 # set $a0 pitch
+       move    $a0              $v0                 # set $a0 pitch
        li      $v0              33
        syscall
        j inc2
@@ -149,77 +148,77 @@ playnote:
 #---------- get_pitch ----------
 get_pitch:
        li      $t7              0                   # check which letter started the note
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsA
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsA
        
        li      $t7              1
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsB
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsB
        
        li      $t7              2
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsC
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsC
        
        li      $t7              3
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsD
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsD
        
        li      $t7              4
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsE
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsE
        
        li      $t7              5
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsF
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsF
        
        li      $t7              6
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsG
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsG
        
        li      $t7              7
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsR
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsR
 acs:
        li      $t7              8                   # assign accidental value to $a0
-       lb      $t6              note($t7)
-       beq     $a0              $t6       itsI
+       lb      $v1              note($t7)
+       beq     $a0              $v1       itsI
        
 oct:                                                # check if there are octal characters
-       lb      $t6              octA
-       beq     $a0              $t6       itsOctA
+       lb      $v1              octA
+       beq     $a0              $v1       itsOctA
 
-       lb      $t6              octC
-       beq     $a0              $t6       itsOctC
+       lb      $v1              octC
+       beq     $a0              $v1       itsOctC
        
 pitchDone:       
        jr      $ra
        
 itsOctA:                                            # assign octal value to $a0
-       add     $t4              $t4       12
+       add     $v0              $v0       12
        j       pitchDone
        
 itsOctC:
-       sub     $t4              $t4       12
+       sub     $v0              $v0       12
        j       pitchDone
        
 itsI:
-       add     $t4              $t4       1
+       add     $v0              $v0       1
        j       oct
        
 itsA:                                               # assign note values to $a0
-       li      $t4              57
+       li      $v0              57
        j       acs
        
 itsB:
-       li      $t4              59
+       li      $v0              59
        j       acs 
            
 itsC:
-       li      $t4              60
+       li      $v0              60
        j       acs
        
 itsD:
-       li      $t4              62
+       li      $v0              62
        j       acs
       
 itsE: 
@@ -227,48 +226,48 @@ itsE:
        lb      $a0              ($t0)
        
        li      $t7              9                   # see if it's an s
-       lb      $t6              note($t7) 
-       beq     $a0              $t6       esjump    # handle es case
+       lb      $v1              note($t7) 
+       beq     $a0              $v1       esjump    # handle es case
        
-       li      $t4              64                  # assign value of 64 if just e
+       li      $v0              64                  # assign value of 64 if just e
        j       acs
 
 esjump:                                             # assign accidental value to $a0
-       sub     $t4              $t4       1
+       sub     $v0              $v0       1
        j       acs
        
 itsF:
-       li      $t4              65
+       li      $v0              65
        j       acs 
            
 itsG:
-       li      $t4              67
+       li      $v0              67
        j       acs
        
 itsR:                                               # rest note
-       li      $t4              0
+       li      $v0              0
        j       acs
       
 #---------- get_rhythm ----------
 get_rhythm:                                         # see which beat value comes up
        li      $t7              10
-       lb      $t6              note($t7)
-       beq     $a0              $t6       its1
+       lb      $v1              note($t7)
+       beq     $a0              $v1       its1
        
        li      $t7              11
-       lb      $t6              note($t7)
-       beq     $a0              $t6       its2
+       lb      $v1              note($t7)
+       beq     $a0              $v1       its2
        
        li      $t7              12
-       lb      $t6              note($t7)
-       beq     $a0              $t6       its4
+       lb      $v1              note($t7)
+       beq     $a0              $v1       its4
        
        li      $t7              13
-       lb      $t6              note($t7)
-       beq     $a0              $t6       its8
+       lb      $v1              note($t7)
+       beq     $a0              $v1       its8
        
-       lb      $t6              rhy
-       beq     $a0              $t6       its16
+       lb      $v1              rhy
+       beq     $a0              $v1       its16
        
 gotR:    
        jr      $ra
