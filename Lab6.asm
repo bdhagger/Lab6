@@ -128,16 +128,16 @@ pn:
                
 #---------- read_note ----------
 read_note:
-       #li      $v0  11             # set syscall to print the character
-      # syscall
+       li      $v0  11             # set syscall to print the character
+       syscall
        
        lb      $a0 ($t0)            # put character in t1
        
        beq     $a0 $t2  pn          # check if reached the end of the string
        beq     $a0 $t3  playnote    # check if it's a space
 
-      li      $v0  11             # set syscall to print the character
-       syscall
+      #li      $v0  11             # set syscall to print the character
+       #syscall
 
        jal get_pitch
        jal get_rhythm
@@ -250,8 +250,8 @@ itsE:
       
        addi    $t0 $t0 1
        lb      $a0 ($t0)
-       li      $v0 11
-       syscall
+       #li      $v0 11
+       #syscall
        
        li      $t7 9
        lb      $t6 note($t7) 
