@@ -20,6 +20,9 @@
 # $t2 is a null character
 # $t3 is an ascii space
 # $t4 holds value to output
+# $t5 hold the pitch to add to the [15:0] bits
+# $t6 holds the song length for the loop
+# $t7 is used for loop increments
 
 #---------- play_song ----------
 
@@ -76,24 +79,24 @@ play_song:
 
        
        jal     get_song_length
-       move    $t8              $v0
-       li      $t9              0
+       move    $t6              $v0
+       li      $t7              0
        
 loop:
-       bge      $t9             $t8       exit  
+       bge      $t7             $t6       exit  
 
        jal     read_note
-       andi $t0 $v0 0x0000FFFF
-       andi $s0 $v0 0xFFFF0000
-       srl  $s0 $s0 16
-       move $a0 $t0
-       move $a1 $s0
+       andi    $t0              $v0       0x0000FFFF
+       andi    $s0              $v0       0xFFFF0000
+       srl     $s0              $s0       16
+       move    $a0              $t0
+       move    $a1              $s0
 
-       jal play_note
+       jal     play_note
        
-       move $a0 $v1
+       move    $a0              $v1
 
-       add     $t9             $t9        1
+       add     $t7              $t7        1
        j       loop
 exit:     
        lw      $ra              ($sp)                  # Go back to old return address
@@ -142,24 +145,24 @@ pn:
        jr      $ra
        
 fourbeats:
-       li $a1 2000
-       j pn
+       li      $a1              2000
+       j       pn
        
 twobeats:
-       li $a1 1000
-       j pn
+       li      $a1              1000
+       j       pn
        
 onebeat:
-       li $a1 500
-       j pn
+       li      $a1              500
+       j       pn
        
 halfbeat:
-       li $a1 250
-       j pn  
+       li      $a1              250
+       j       pn  
            
 quarterbeat:
-       li $a1 125
-       j pn
+       li      $a1              125
+       j       pn
                
 #---------- read_note ----------
 read_note:
@@ -274,7 +277,7 @@ get_rhythm:
        li      $t3              0x20                   # t3 is an ascii space
        li      $t2              0x0                    # t2 represents null
        
-       move    $t4             $a1
+       move    $t4              $a1
 
 gr:                                                    
        lb      $t0              ($t1)                  # current character
@@ -315,7 +318,6 @@ rhythm16:
 end2:
        add $t1 $t1 1
        
-
        move    $v0             $t4                     # move pitch value to first output
        move    $v1             $t1                     # move address value to second output
  
