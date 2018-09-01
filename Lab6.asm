@@ -73,18 +73,29 @@
 play_song:
        subi    $sp              $sp       4            # push  
        sw      $ra              ($sp)                                             
+
        
        jal     get_song_length
+       move    $t8              $v0
+       li      $t9              0
        
+loop:
+       bge      $t9             $t8       exit  
+
        jal     read_note
        andi $t0 $v0 0x0000FFFF
        andi $s0 $v0 0xFFFF0000
        srl  $s0 $s0 16
        move $a0 $t0
        move $a1 $s0
- 
+
        jal play_note
-             
+       
+       move $a0 $v1
+
+       add     $t9             $t9        1
+       j       loop
+exit:     
        lw      $ra              ($sp)                  # Go back to old return address
        addi    $sp              $sp       4            # pop
        
@@ -116,6 +127,7 @@ numNotes:
 
 #---------- play_note ----------
 play_note:
+     
        beq     $a1              1         fourbeats
        beq     $a1              2         twobeats
        beq     $a1              4         onebeat
@@ -172,10 +184,12 @@ read_note:
 get_pitch:
        la      $t1              ($a0)                  # t1 gets string address
        li      $t3              0x20                   # t3 is an ascii space
+       li      $t2              0x0                    # t2 represents null
        li      $t4              0                      # t4 temporarily holds the number of notes
 
 gp:                                                    # loop through each character in note
        lb      $t0              ($t1)                  # current character
+       beq     $t0              $t2       end          # check if it's the ned of a string
        beq     $t0              $t3       end          # check if it's a space
        
        beq     $t0              0x61      aPitch       # check which <note> it is
@@ -258,11 +272,15 @@ end:
 get_rhythm: 
        la      $t1              ($a0)                  # t1 gets string address
        li      $t3              0x20                   # t3 is an ascii space
+       li      $t2              0x0                    # t2 represents null
+       
+       move    $t4             $a1
 
 gr:                                                    
        lb      $t0              ($t1)                  # current character
        
        beq     $t0              $t3       end2         # check if it's a space
+       beq     $t0              $t2       end2         # check if it's the end of the string
        
        beq     $t0              0x31      rhythm1      # check which rhythm it is
        beq     $t0              0x32      rhythm2
@@ -297,8 +315,9 @@ rhythm16:
 end2:
        add $t1 $t1 1
        
+
        move    $v0             $t4                     # move pitch value to first output
        move    $v1             $t1                     # move address value to second output
-       
+ 
        jr      $ra
        
