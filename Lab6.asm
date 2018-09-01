@@ -1,7 +1,7 @@
 ####################################################################################
 # Created by:  Haggerty, Barbara Louise
 #              bdhagger
-#              23 August 2018
+#              31 August 2018
 #
 # Assignment:  Lab 6: Musical Subroutines
 #              CMPE 012, Computer Systems and Assembly Language
@@ -16,11 +16,10 @@
 
 # REGISTER USAGE
 
-# $t0: holds original song string
-# $t1: holds the number of notes
-# $t2: represents null for end of string
-# $t3: is an ascii space
-# $t7: used as an index
+# $t1 gets string address
+# $t2 is a null character
+# $t3 is an ascii space
+# $t4 holds value to output
 
 #---------- play_song ----------
 
@@ -68,259 +67,242 @@
 
 ####################################################################################
 
-.data
-       song:   .asciiz "e'8 g' e'' c'' d'' g''"
-       note:   .byte   'a','b','c','d','e','f','g','r','i','s','1','2','4','8'
-       rhy:    .asciiz "16"
-       octA:   .asciiz "'"
-       octC:   .asciiz ","
-       
 .text
      
 #---------- play_song ----------
 play_song:
- 
-       la      $a0              song                # put song string in t0
-       li      $t1              1                   # initialize # of notes
-       li      $t2              0                   # initialize null
-       li      $t3              0x20                # set $t3 as an ascii space
-       li      $v0              0                   # initialize pitch to 0
+       subi    $sp              $sp       4            # push  
+       sw      $ra              ($sp)                                             
        
-       li      $a1              500                 # initialize tempo to 1 bpm
-       li      $a3              127                 # set volume to 127
- 
        jal     get_song_length
-rps:
-
+       
+       
        jal     play_note
-       j       exit
+             
+       lw      $ra              ($sp)                  # Go back to old return address
+       addi    $sp              $sp       4            # pop
+       
+       jr      $ra
        
 #------- get_song_length -------
 get_song_length:
-       move    $t6              $a0                 # put character in $t6
-       lb      $t0              ($t6)
-       beq     $t0              $t2       numNotes  # check if reached the end of the string
-       beq     $t0              $t3       space1    # check if it's a space
+       la      $t1              ($a0)                  # t1 gets string address
+       li      $t2              0x0                    # t2 represents null
+       li      $t3              0x20                   # t3 is an ascii space
+       li      $t4              1                      # t4 temporarily holds the number of notes
 
- inc:   
-       add     $a0              $a0       1         # increment loop
-       j       get_song_length
+gsl:
+       lb      $t0              ($t1)                  # current character
+       beq     $t0              $t2       numNotes     # check if reached the end of the string
+       beq     $t0              $t3       space        # check if it's a space
        
-space1:
-       add     $t1              $t1       1         # increment number of notes
-       j       inc
+       add     $t1              $t1       1            # increment loop
+       j       gsl
+         
+space: 
+       add     $t4              $t4       1            # increment number of notes      
+       add     $t1              $t1       1            # jump over space
+       j       gsl
        
 numNotes:
-       move     $v0              $t1                 # output the number of notes in the song
-       j rps
-           
+       move    $v0              $t4
+       jr      $ra
+
 #---------- play_note ----------
 play_note:
-       la      $t0 song      # put start of string back in t0
-
-       jal     read_note
-pn:    
-       move    $a0 $t4       # set to real pitch
-       li      $v0 33
-       syscall               # play the last note
-
-       j exit
+       beq     $a1              1         fourbeats
+       beq     $a1              2         twobeats
+       beq     $a1              4         onebeat
+       beq     $a1              8         halfbeat
+       beq     $a1              16        quarterbeat
+       
+pn:     
+       li      $a3              123
+       li      $v0              33
+       syscall
+       
+       jr      $ra
+       
+fourbeats:
+       li $a1 2000
+       j pn
+       
+twobeats:
+       li $a1 1000
+       j pn
+       
+onebeat:
+       li $a1 500
+       j pn
+       
+halfbeat:
+       li $a1 250
+       j pn  
+           
+quarterbeat:
+       li $a1 125
+       j pn
                
 #---------- read_note ----------
 read_note:
-       li      $v0  11             # set syscall to print the character
-       syscall
+       subi    $sp              $sp       4            # push  
+       sw      $ra              ($sp)
+      
+       jal     get_pitch
+       move    $t5              $v0
+       move    $t6              $v0
        
-       lb      $a0 ($t0)            # put character in t1
        
-       beq     $a0 $t2  pn          # check if reached the end of the string
-       beq     $a0 $t3  playnote    # check if it's a space
+       jal     get_rhythm
+   
+       
+       sll     $v0              $v0       16
 
-      #li      $v0  11             # set syscall to print the character
-       #syscall
+       add     $v0              $v0       $t5
+       move    $t5              $v0
 
-       jal get_pitch
-       jal get_rhythm
+       #move    $a0              $t6
+       #move    $a1              $t7
+       #jal play_note
        
        
-       
-inc2:   
-       add     $t0  $t0  1   # increment loop
-       j read_note
-       
-playnote:
-       move    $v0 $a1      # put note rhythm in v0
-       move $t8 $a0
- 
-       move    $a0 $t4       # set to real pitch
-       li      $v0 33
-       syscall
-       
-       move $a0 $t8
-       j inc2
+       lw      $ra              ($sp)                  # Go back to old return address
+       addi    $sp              $sp       4            # pop
+
+       move    $v0              $t5
+       jr      $ra
                   
 #---------- get_pitch ----------
-get_pitch:       
-       li      $t7  0
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsA
-       
-       li      $t7  1
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsB
-       
-       li      $t7  2
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsC
-       
-       li      $t7  3
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsD
-       
-       li      $t7  4
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsE
-       
-       li      $t7  5
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsF
-       
-       li      $t7  6
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsG
-       
-       li      $t7  7
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsR
-acs:
-       li      $t7  8
-       lb      $t6  note($t7)
-       beq     $a0  $t6 itsI
-       
-oct:     
-       lb      $t6  octA
-       beq     $a0  $t6 itsOctA
+get_pitch:
+       la      $t1              ($a0)                  # t1 gets string address
+       li      $t3              0x20                   # t3 is an ascii space
+       li      $t4              0                      # t4 temporarily holds the number of notes
 
-       lb      $t6  octC
-       beq     $a0  $t6 itsOctC
+gp:                                                    # loop through each character in note
+       lb      $t0              ($t1)                  # current character
+       beq     $t0              $t3       end          # check if it's a space
        
-pitchDone: 
-       move $v0 $t4   # output pitch value in $v0
-       
-       #move $v1 $a0
-       #move $a0 $v1
-       #li $v0 11
-       #syscall  
-           
-       jr $ra
-       
-itsOctA:
-       add     $t4  $t4 12
-       j pitchDone
-       
-itsOctC:
-       sub     $t4  $t4 12
-       j pitchDone
-       
-itsI:
-      add $t4 $t4 1
-      j oct
-       
-itsA:
-      li $t4 57
-      j acs
-       
-itsB:
-      li $t4 59
-      j acs 
-           
-itsC:
-      li $t4 60
-      j acs
-       
-itsD:
-      li $t4 62
-      j acs
-      
-itsE:
-      # if it's an e then you have to jump to the next character
-      # see if it's an s
-      #     if s, sub 1 from t4
-      #     else go back a character and jump back here to assign value of 64
-      
-       addi    $t0 $t0 1
-       lb      $a0 ($t0)
-       #li      $v0 11
-       #syscall
-       
-       li      $t7 9
-       lb      $t6 note($t7) 
-       beq     $a0 $t6 esjump
-       
-       li $t4 64  
-       j acs
+       beq     $t0              0x61      aPitch       # check which <note> it is
+       beq     $t0              0x62      bPitch
+       beq     $t0              0x63      cPitch
+       beq     $t0              0x64      dPitch
+       beq     $t0              0x65      ePitch
+       beq     $t0              0x66      fPitch
+       beq     $t0              0x67      gPitch
+       beq     $t0              0x72      rPitch
+       beq     $t0              0x69      isAccidental # check if there's an <accidental>
+       beq     $t0              0x27      aOctave      # check if there's an <octave>
+       beq     $t0              0x2C      cOctave
 
-esjump:
-      sub $t4 $t4 1
-      move $a0 $t8
-      j acs
+gpBack:
+       add     $t1              $t1       1            # increment loop
+       j       gp
        
-itsF:
-      li $t4 65
-      j acs 
-           
-itsG:
-      li $t4 67
-      j acs
+aPitch:
+       li      $t4              57
+       j       gpBack  
+
+bPitch:
+       li      $t4              59
+       j       gpBack  
+        
+cPitch:
+       li      $t4              60
+       j       gpBack  
+
+dPitch:
+       li      $t4              62
+       j       gpBack
+
+ePitch:
+       add     $t1              $t1       1
+       lb      $t0              ($t1)
+       beq     $t0              0x73      esAccidental # check if next character is s for accidental
        
-itsR:
-      li $t4 0
-      j acs
-      
+       sub     $t1              $t1       1            # not accidental so go back a character
+       li      $t4              64
+       j       gpBack
+       
+esAccidental:                                          
+       sub     $t4              $t4       1            # decrease accidental
+       j       gpBack
+       
+isAccidental:                                       
+       add     $t4              $t4       1            # increase accidental
+       j       gpBack
+
+fPitch:
+       li      $t4              65
+       j       gpBack  
+       
+gPitch:
+       li      $t4              67
+       j       gpBack  
+
+rPitch:
+       li      $t4              0
+       j       gpBack
+         
+aOctave:
+       add     $t4              $t4       12
+       j       gpBack  
+       
+cOctave:
+       sub     $t4              $t4       12
+       j       gpBack       
+
+end:
+       move    $v0              $t4                    # move pitch value to first output
+       sub     $t1 $t1 1
+       move    $v1              $t1                    # move address value to second output
+
+       jr      $ra
+
 #---------- get_rhythm ----------
-get_rhythm:
-       li      $t7  10
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its1
-       
-       li      $t7  11
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its2
-       
-       li      $t7  12
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its4
-       
-       li      $t7  13
-       lb      $t6  note($t7)
-       beq     $a0  $t6 its8
-       
-       lb      $t6  rhy
-       beq     $a0  $t6 its16
-       
-gotR:  
-       move $v0 $a1     # output a pitch value in v0
-       jr $ra
+get_rhythm: 
+       la      $t1              ($a0)                  # t1 gets string address
+       li      $t3              0x20                   # t3 is an ascii space
 
-its1:
-       li $a1 2000
-       j gotR
+gr:                                                    
+       lb      $t0              ($t1)                  # current character
        
-its2:
-       li $a1 1000
-       j gotR
+       beq     $t0              $t3       end2         # check if it's a space
        
-its4:
-       li $a1 500
-       j gotR
+       beq     $t0              0x31      rhythm1      # check which rhythm it is
+       beq     $t0              0x32      rhythm2
+       beq     $t0              0x34      rhythm4
+       beq     $t0              0x38      rhythm8
+       beq     $t0              0x36      rhythm16    
        
-its8:
-       li $a1 250
-       j gotR
+grBack:
+       add     $t1              $t1       1            # increment loop
+       j       gr
        
-its16:
-       li $a1 125
-       j gotR
-exit:
-       li $v0, 10
-       syscall
+rhythm1:
+       li      $t4              1                      # 4 beats
+       j       grBack
+
+rhythm2:                                       
+       li      $t4              2                      # 2 beats
+       j       grBack
+       
+rhythm4:                                       
+       li      $t4              4                      # 1 beat
+       j       grBack
+
+rhythm8:        
+       li      $t4              8                      # 1/2 beat
+       j       grBack
+
+rhythm16:                                       
+       li      $t4              16                     # 1/4 beat
+       j       grBack
+       
+end2:
+       add $t1 $t1 1
+       
+       move    $v0             $t4                     # move pitch value to first output
+       move    $v1             $t1                     # move address value to second output
+       
+       jr      $ra
+       
