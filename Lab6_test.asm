@@ -49,10 +49,10 @@ str_newline:           .asciiz "\n"
 #song:                   .asciiz "a,4 ais,4 b,4 c,4 cis,4 d,4 dis,4 e,4 f,4 fis,4 g,4 gis,4 a4 ais4 b4 c4 cis4 d4 dis4 e4 f4 fis4 g4 gis4 a'4 ais'4 b'4 c'4 cis'4 d'4 dis'4 e'4 f'4 fis'4 g'4 gis'4 a''4"
 
                                 # 1-up sound
-#song:                   .asciiz "e'8 g' e'' c'' d'' g''"
+song:                   .asciiz "e'8 g' e'' c'' d'' g''"
 
                                 # Super Mario Bros 1 Overworld Intro
-song:                   .asciiz "e8 e r e r c e r g r r r g,"
+#song:                   .asciiz "e8 b r e r c e r g r r r g,"
 .text
 
 #---------------------------------- print length of song
