@@ -76,7 +76,14 @@ play_song:
        
        jal     get_song_length
        
-       
+       jal     read_note
+       andi $t0 $v0 0x0000FFFF
+       andi $s0 $v0 0xFFFF0000
+       srl  $s0 $s0 16
+       move $a0 $t0
+       move $a1 $s0
+ 
+       jal play_note
              
        lw      $ra              ($sp)                  # Go back to old return address
        addi    $sp              $sp       4            # pop
@@ -149,22 +156,12 @@ read_note:
       
        jal     get_pitch
        move    $t5              $v0
-       move    $t6              $v0
-       
-       
-       jal     get_rhythm
-       move    $t7              $v0
-       
-       sll     $v0              $v0       16
 
+       jal     get_rhythm
+       sll     $v0              $v0       16
        add     $v0              $v0       $t5
        move    $t5              $v0
 
-       move    $a0             $t6
-       move    $a1             $t7 
-       jal play_note
-       
-       
        lw      $ra              ($sp)                  # Go back to old return address
        addi    $sp              $sp       4            # pop
 
